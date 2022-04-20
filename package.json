@@ -1,6 +1,6 @@
 {
   "name": "masonite-broadcast-server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Masonite broadcast server for Socket.io",
   "repository": {
     "type": "git",
