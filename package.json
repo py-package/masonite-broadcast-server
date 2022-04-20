@@ -1,6 +1,6 @@
 {
   "name": "masonite-broadcast-server",
-  "version": "1.6.3",
+  "version": "0.0.1",
   "description": "Masonite broadcast server for Socket.io",
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
     "build": "tsc",
     "dev": "tsc -w",
     "prepublish": "npm run build",
+    "release": "npm run build && npm version patch && npm publish",
     "demo": "node examples/server.js"
   },
   "dependencies": {
