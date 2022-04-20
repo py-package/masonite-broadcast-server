@@ -15,7 +15,7 @@ export class BroadcastServer {
      * Default server options.
      */
     public defaultOptions: any = {
-        authHost: 'http://localhost:8000',
+        authHost: 'http://localhost',
         authEndpoint: '/broadcasting/auth',
         clients: [],
         database: 'redis',
