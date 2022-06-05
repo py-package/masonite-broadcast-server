@@ -21,7 +21,7 @@
     "dev": "tsc -w",
     "prepublish": "npm run build",
     "release": "npm run build && npm version patch && npm publish",
-    "demo": "node examples/server.js"
+    "serve": "npm run build && node bin/server.js start"
   },
   "dependencies": {
     "colors": "1.4.0",
