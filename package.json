@@ -1,0 +1,46 @@
+{
+  "name": "masonite-broadcast-server",
+  "version": "1.0.0",
+  "description": "Masonite broadcast server.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yubarajshrestha/masonite-broadcast-server.git"
+  },
+  "author": "Yubaraj Shrestha",
+  "license": "MIT",
+  "main": "./lib/app.js",
+  "dependencies": {
+    "@socket.io/redis-adapter": "^7.2.0",
+    "chalk": "4.1.2",
+    "commander": "^9.3.0",
+    "esbuild": "^0.14.41",
+    "express": "^4.18.1",
+    "figlet": "^1.5.2",
+    "path": "^0.12.7",
+    "redis": "^4.1.0",
+    "socket.io": "^4.5.1",
+    "typescript": "^4.7.3"
+  },
+  "scripts": {
+    "dev": "nodemon",
+    "start": "./lib/app.js start",
+    "copy-asset": "cp -r ./src/templates ./lib/templates",
+    "build": "rimraf ./lib && esbuild src/app.ts --bundle --outfile=lib/app.js --minify --sourcemap --platform=node && npm run copy-asset",
+    "release": "npm run build && npm version patch && npm publish"
+  },
+  "bin": {
+    "mbroadcast": "./lib/app.js"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.6",
+    "utf-8-validate": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/node": "^17.0.42",
+    "eslint": "^8.17.0",
+    "nodemon": "^2.0.16",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.8.1"
+  }
+}

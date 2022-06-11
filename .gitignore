@@ -1,6 +1,10 @@
 node_modules/
 dist/
+lib/
 examples/
 npm-debug.log
 yarn-error.log
 .idea/
+.vscode/
+.DS_Store
+.env

@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es2015",
+        "declaration": true,
+        "pretty": true,
+        "outDir": "./dist",
+        "esModuleInterop": true,
+        "preserveConstEnums": true,
+        "removeComments": true,
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
