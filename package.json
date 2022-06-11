@@ -1,6 +1,6 @@
 {
   "name": "masonite-broadcast-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Masonite broadcast server.",
   "repository": {
     "type": "git",
@@ -42,5 +42,9 @@
     "nodemon": "^2.0.16",
     "rimraf": "^3.0.2",
     "ts-node": "^10.8.1"
-  }
+  },
+  "keywords": [
+    "masonite",
+    "socket.io"
+  ]
 }
