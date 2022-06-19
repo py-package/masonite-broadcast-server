@@ -13,29 +13,42 @@ import SocketChannel from "./channels/socket-channel";
 const app: Application = express();
 const httpServer: Server = createServer(app);
 
-new SocketChannel(httpServer, 'default');
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', function (req, res, next) {
     res.sendFile(__dirname + '/templates/index.html');
 });
 
-program
-    .version('0.0.1')
-    .command('exec start')
-    .description("Masonite Broadcast Server!")
-    .option('-p, --port <n>', 'Port to listen on', "3000")
-    .option('-h, --host <n>', 'Host to listen on', 'localhost')
-    .parse(process.argv);
+// Check if the user is running the app in the terminal
+if (process.argv.length > 2) {
 
-const options = program.opts();
+    program
+        .version('0.0.1')
+        .command('exec start')
+        .description("Masonite Broadcast Server!")
+        .option('-p, --port <n>', 'Port to listen on', "3000")
+        .option('-h, --host <n>', 'Host to listen on', 'localhost')
+        .option('-a, --auth <n>', 'Broadcast auth url', '/broadcasting/auth')
+        .parse(process.argv);
 
-httpServer.listen(options.port ?? 3000, options.host ?? 'localhost', () => {
-    console.log(
-        chalk.red(
-            figlet.textSync('MBroadCast', { horizontalLayout: 'full' }),
-            "listening on *:" + (options.port ?? 3000)
-        )
-    );
-});
+    const options = program.opts();
+
+    httpServer.listen(options.port ?? 3000, options.host ?? 'localhost', () => {
+        console.log(
+            chalk.red(
+                figlet.textSync('MBroadCast', { horizontalLayout: 'full' }),
+                "listening on *:" + (options.port ?? 3000)
+            )
+        );
+    });
+} else {
+    new SocketChannel(httpServer, "http://localhost:8000//broadcasting/authorize");
+    httpServer.listen(3000, () => {
+        console.log(
+            chalk.red(
+                figlet.textSync('MBroadCast', { horizontalLayout: 'full' }),
+                "dev listening on *:" + (3000)
+            )
+        );
+    });
+}
