@@ -1,6 +1,6 @@
 {
   "name": "masonite-broadcast-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Masonite broadcast server.",
   "repository": {
     "type": "git",
@@ -11,6 +11,7 @@
   "main": "./lib/app.js",
   "dependencies": {
     "@socket.io/redis-adapter": "^7.2.0",
+    "axios": "^0.27.2",
     "chalk": "4.1.2",
     "commander": "^9.3.0",
     "esbuild": "^0.14.41",

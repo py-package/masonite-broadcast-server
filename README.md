@@ -17,6 +17,10 @@
 
 Broadcast server for masonite framework. It is a simple server that can be used to broadcast messages to all connected clients using socket-io.
 
+> [Broadcast Driver Link for Backend](https://github.com/yubarajshrestha/masonite-socketio-driver)
+
+> [Broadcast Client for Frontend](https://github.com/yubarajshrestha/masonite-broadcast-client)
+
 ### Getting Started
 
 Install the package using yarn or npm:
@@ -32,7 +36,7 @@ You can start the server using the following command:
 
 ```sh
 $ mbroadcast start
-$ mboradcast start --port=3000 --host=127.0.0.1
+$ mboradcast start --port=3000 --host=127.0.0.1 --auth=/broadcasting/auth
 ```
 
 <img src="running.png" />

@@ -5,17 +5,19 @@ import { Payload } from "../types";
 import Channel from ".";
 const pubClient = createClient({ url: "redis://localhost:6379" });
 const subClient = pubClient.duplicate();
+import axios from "axios";
 
 class SocketChannel extends Channel {
     io: any;
     channel: string;
     socket: any;
+    broadcastAuthUrl: string;
 
-    constructor(server, channel: string) {
+    constructor(server, broadcastAuthUrl: "http://localhost:8000//broadcasting/authorize") {
         super();
+        this.broadcastAuthUrl = broadcastAuthUrl;
 
-        this.io = new Server(server, { /* options */ });;
-        this.channel = channel || 'default';
+        this.io = new Server(server, { /* options */ });
 
         Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
             this.io.adapter(createAdapter(pubClient, subClient));
@@ -27,10 +29,9 @@ class SocketChannel extends Channel {
 
     __connection(socket) {
         this.socket = socket;
-
         socket.on('disconnect', this.__disconnect.bind(this, socket));
         socket.on('error', this.__error.bind(this));
-        socket.on('join', this.__join.bind(this));
+        socket.on('subscribe', this.__subscribe.bind(this));
 
         // listen to the dynamic event
         socket.on('whisper', this.__whispers.bind(this));
@@ -61,13 +62,21 @@ class SocketChannel extends Channel {
         this.io.to(channel).emit(event, data);
     }
 
-    __join(payload) {
-        if (payload.channel && payload.name) {
-            this.addUser({ id: this.socket.id, name: payload.name, address: this.socket.handshake.address });
+    __subscribe(payload) {
+        if (payload.channel) {
+            this.addUser({ id: this.socket.id, name: payload.name ?? this.socket.id, address: this.socket.handshake.address });
             this.addChannel({ name: payload.channel });
             this.socket.join(payload.channel);
+            axios.post(this.broadcastAuthUrl, {
+                channel_name: payload.channel,
+                socket_id: this.socket.id
+            }).then((response) => {
+                this.addChannel({ name: `private-${payload.channel}` });
+                this.socket.join(`private-${payload.channel}`);
+            }).catch((err) => {
+                console.log(err);
+            })
         }
-        this.__broadcastStatus();
     }
 
     __disconnect(socket) {
@@ -75,8 +84,6 @@ class SocketChannel extends Channel {
         this.users = this.users.filter((user) => {
             return user !== socket.id;
         });
-
-        this.__broadcastStatus();
     }
 
     __broadcast(event, data) {
