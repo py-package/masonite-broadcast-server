@@ -17,6 +17,10 @@
 
 Broadcast server for masonite framework. It is a simple server that can be used to broadcast messages to all connected clients using socket-io.
 
+> [Broadcast Driver Link for Backend](https://github.com/yubarajshrestha/masonite-socketio-driver)
+
+> [Broadcast Client for Frontend](https://github.com/yubarajshrestha/masonite-broadcast-client)
+
 ### Getting Started
 
 Install the package using yarn or npm:
