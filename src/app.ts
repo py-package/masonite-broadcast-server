@@ -19,12 +19,14 @@ app.get('/', function (req, res, next) {
     res.sendFile(__dirname + '/templates/index.html');
 });
 
-// Check if the user is running the app in the terminal
-if (process.argv.length > 2) {
+let host = '127.0.0.1';
+let port = 3000;
+let authUrl = '/broadcasting/auth';
 
+try {
     program
         .version('0.0.1')
-        .command('exec start')
+        // .command('exec start')
         .description("Masonite Broadcast Server!")
         .option('-p, --port <n>', 'Port to listen on', "3000")
         .option('-h, --host <n>', 'Host to listen on', 'localhost')
@@ -32,22 +34,16 @@ if (process.argv.length > 2) {
         .parse(process.argv);
 
     const options = program.opts();
-
-    httpServer.listen(options.port ?? 3000, options.host ?? 'localhost', () => {
+    host = options.host;
+    port = options.port;
+    authUrl = options.auth;
+} finally {
+    new SocketChannel(httpServer, authUrl);
+    httpServer.listen(port, host, () => {
         console.log(
             chalk.red(
                 figlet.textSync('MBroadCast', { horizontalLayout: 'full' }),
-                "listening on *:" + (options.port ?? 3000)
-            )
-        );
-    });
-} else {
-    new SocketChannel(httpServer, "http://localhost:8000//broadcasting/authorize");
-    httpServer.listen(3000, () => {
-        console.log(
-            chalk.red(
-                figlet.textSync('MBroadCast', { horizontalLayout: 'full' }),
-                "dev listening on *:" + (3000)
+                "listening on *:" + (port)
             )
         );
     });
