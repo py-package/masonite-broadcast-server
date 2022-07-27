@@ -13,7 +13,7 @@ class SocketChannel extends Channel {
     socket: any;
     broadcastAuthUrl: string;
 
-    constructor(server, broadcastAuthUrl: "http://localhost:8000//broadcasting/authorize") {
+    constructor(server, broadcastAuthUrl: string = "http://localhost:8000//broadcasting/authorize") {
         super();
         this.broadcastAuthUrl = broadcastAuthUrl;
 

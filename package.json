@@ -4,7 +4,7 @@
   "description": "Masonite broadcast server.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yubarajshrestha/masonite-broadcast-server.git"
+    "url": "https://github.com/py-package/masonite-broadcast-server.git"
   },
   "author": "Yubaraj Shrestha",
   "license": "MIT",
