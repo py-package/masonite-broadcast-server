@@ -21,7 +21,7 @@ app.get('/', function (req, res, next) {
 
 let host = '127.0.0.1';
 let port = 3000;
-let authUrl = '/broadcasting/auth';
+let authUrl = 'http://localhost:8000/broadcasting/auth';
 
 try {
     program
@@ -30,7 +30,7 @@ try {
         .description("Masonite Broadcast Server!")
         .option('-p, --port <n>', 'Port to listen on', "3000")
         .option('-h, --host <n>', 'Host to listen on', 'localhost')
-        .option('-a, --auth <n>', 'Broadcast auth url', '/broadcasting/auth')
+        .option('-a, --auth <n>', 'Broadcast auth url', 'http://localhost:8000/broadcasting/auth')
         .parse(process.argv);
 
     const options = program.opts();
