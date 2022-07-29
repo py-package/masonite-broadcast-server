@@ -36,7 +36,7 @@ You can start the server using the following command:
 
 ```sh
 $ mbroadcast start
-$ mboradcast start --port=3000 --host=127.0.0.1 --auth=/broadcasting/auth
+$ mboradcast start --port=3000 --host=127.0.0.1 --auth=http://localhost:8000/broadcasting/auth
 ```
 
 <img src="running.png" />
