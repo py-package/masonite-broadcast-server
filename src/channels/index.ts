@@ -1,11 +1,11 @@
 import { Room, User } from '../types';
-
+import redisDB from "../database/redis.db";
 class Channel {
     users: Array<User> = [];
     channels: Array<Room> = [];
 
-    userExists(id: string) {
-        return this.getUser(id) !== undefined;
+    async userExists(id: string) {
+        return await this.getUser(`mbroadcast_users:${id}`) !== undefined;
     }
 
     channelExists(name: string) {
@@ -22,18 +22,28 @@ class Channel {
         return this.channels.find(c => c.name === name);
     }
 
-    addUser(user: User) {
-        if (!this.userExists(user.id)) {
-            this.users.push(user);
+    async getUsers() {
+        const userIds = await redisDB.client.keys('mbroadcast_users:*');
+        this.users = await Promise.all(userIds.map(id => this.getUser(id)));
+        return this.users;
+    }
+
+    async addUser(user: User) {
+        if (!await this.userExists(user.id)) {
+            await redisDB.client.set(`mbroadcast_users:${user.id}`, JSON.stringify(user));
         }
     }
 
-    removeUser(id: string) {
-        this.users = this.users.filter(u => u.id !== id);
+    async removeUser(id: string) {
+        await redisDB.client.del(`mbroadcast_users:${id}`);
     }
 
-    getUser(id: string) {
-        return this.users.find(u => u.id === id);
+    async getUser(id: string) {
+        const user = await redisDB.client.get(id);
+        if (user) {
+            return JSON.parse(user);
+        }
+        return undefined;
     }
 }
 

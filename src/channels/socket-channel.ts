@@ -1,11 +1,8 @@
-import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
+
 import { Server } from "socket.io";
 import { Payload } from "../types";
 import Channel from ".";
-const pubClient = createClient({ url: "redis://localhost:6379" });
-const subClient = pubClient.duplicate();
-import axios from "axios";
+import redisDB from "../database/redis.db";
 
 class SocketChannel extends Channel {
     io: any;
@@ -13,21 +10,23 @@ class SocketChannel extends Channel {
     socket: any;
     broadcastAuthUrl: string;
 
-    constructor(server, broadcastAuthUrl: string = "http://localhost:8000//broadcasting/authorize") {
+    constructor(server, broadcastAuthUrl: string = "http://localhost:8000/broadcasting/authorize") {
         super();
         this.broadcastAuthUrl = broadcastAuthUrl;
 
         this.io = new Server(server, { /* options */ });
 
-        Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
-            this.io.adapter(createAdapter(pubClient, subClient));
-            this.io.on('connection', this.__connection.bind(this));
-        }).catch((error) => {
-            this.__error(error);
+        redisDB.adapter(async (adapter) => {
+            if (adapter instanceof Error) {
+                console.error(adapter);
+            } else {
+                this.io.adapter(adapter);
+                this.io.on('connection', this.__connection.bind(this));
+            }
         });
     }
 
-    __connection(socket) {
+    async __connection(socket) {
         this.socket = socket;
         socket.on('disconnect', this.__disconnect.bind(this, socket));
         socket.on('error', this.__error.bind(this));
@@ -38,7 +37,7 @@ class SocketChannel extends Channel {
         socket.on('speak', this.__speaks.bind(this));
     }
 
-    __whispers(payload: Payload) {
+    async __whispers(payload: Payload) {
         if (payload.channel === this.channel) {
             this.__broadcast('whisper', payload);
         } else {
@@ -46,7 +45,7 @@ class SocketChannel extends Channel {
         }
     }
 
-    __speaks(payload: Payload) {
+    async __speaks(payload: Payload) {
         if (payload.channel === this.channel) {
             this.__emit(payload.type, payload.payload);
         } else {
@@ -54,53 +53,52 @@ class SocketChannel extends Channel {
         }
     }
 
-    __emit(event, data) {
+    async __emit(event, data) {
         this.io.emit(event, data);
     }
 
-    __emitTo(event, data, channel) {
+    async __emitTo(event, data, channel) {
         this.io.to(channel).emit(event, data);
     }
 
-    __subscribe(payload) {
+    async __subscribe(payload) {
         if (payload.channel) {
-            this.addUser({ id: this.socket.id, name: payload.name ?? this.socket.id, address: this.socket.handshake.address });
+            await this.getUsers();
+            await this.addUser({ id: this.socket.id, name: payload.name ?? this.socket.id, address: this.socket.handshake.address });
             this.addChannel({ name: payload.channel });
             this.socket.join(payload.channel);
-            axios.post(this.broadcastAuthUrl, {
-                channel_name: payload.channel,
-                socket_id: this.socket.id
-            }).then((response) => {
-                this.addChannel({ name: `private-${payload.channel}` });
-                this.socket.join(`private-${payload.channel}`);
-            }).catch((err) => {
-                console.log(err);
-            })
+            // axios.post(this.broadcastAuthUrl, {
+            //     channel_name: payload.channel,
+            //     socket_id: this.socket.id
+            // }).then((response) => {
+            //     this.addChannel({ name: `private-${payload.channel}` });
+            //     this.socket.join(`private-${payload.channel}`);
+            // }).catch((err) => {
+            //     console.info("broadcast auth server does not exists...")
+            // })
         }
     }
 
-    __disconnect(socket) {
+    async __disconnect(socket) {
         this.removeUser(socket.id);
-        this.users = this.users.filter((user) => {
-            return user !== socket.id;
-        });
+        this.getUsers();
     }
 
-    __broadcast(event, data) {
+    async __broadcast(event, data) {
         // Broadcast to all users
         this.socket.broadcast.emit(event, data);
     }
 
-    __broadcastTo(event, data, channel) {
+    async __broadcastTo(event, data, channel) {
         // Broadcast to all users in the specified room
         this.socket.broadcast.to(channel).emit(event, data);
     }
 
-    __error(error) {
+    async __error(error) {
         console.log(error);
     }
 
-    __broadcastStatus() {
+    async __broadcastStatus() {
         this.__emit('users', this.users);
         this.__emit('channels', this.channels);
     }
