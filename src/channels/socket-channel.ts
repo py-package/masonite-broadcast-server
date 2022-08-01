@@ -1,8 +1,9 @@
 
 import { Server } from "socket.io";
-import { Payload } from "../types";
+import { Payload, User } from "../types";
 import Channel from ".";
-import redisDB from "../database/redis.db";
+import { adapter, redisSession } from "../database/redis.db";
+import AuthMiddleware from "../middlewares/auth.middleware";
 
 class SocketChannel extends Channel {
     io: any;
@@ -14,9 +15,18 @@ class SocketChannel extends Channel {
         super();
         this.broadcastAuthUrl = broadcastAuthUrl;
 
-        this.io = new Server(server, { /* options */ });
+        this.io = new Server(server, {
+            cors: {
+                origin: '*',
+                methods: ['GET', 'POST', 'OPTIONS'],
+                allowedHeaders: ['Authorization'],
+                credentials: true,
+            },
+        });
 
-        redisDB.adapter(async (adapter) => {
+        this.io.use(AuthMiddleware);
+
+        adapter(async (adapter) => {
             if (adapter instanceof Error) {
                 console.error(adapter);
             } else {
@@ -24,15 +34,22 @@ class SocketChannel extends Channel {
                 this.io.on('connection', this.__connection.bind(this));
             }
         });
+
+        // setupWorker(this.io);
     }
 
     async __connection(socket) {
         this.socket = socket;
-        socket.on('disconnect', this.__disconnect.bind(this, socket));
-        socket.on('error', this.__error.bind(this));
-        socket.on('subscribe', this.__subscribe.bind(this));
 
-        // listen to the dynamic event
+        const user: User = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true })
+        await redisSession.saveSession(socket.sessionID, user)
+        socket.broadcast.emit("user:connected", user.toJSON());
+        socket.join(socket.userID);
+
+        socket.on('disconnect', this.__disconnect.bind(this));
+        socket.on('error', this.__error.bind(this));
+        socket.on('subscribe', this.__subscribe.bind(this, user));
+
         socket.on('whisper', this.__whispers.bind(this));
         socket.on('speak', this.__speaks.bind(this));
     }
@@ -61,12 +78,17 @@ class SocketChannel extends Channel {
         this.io.to(channel).emit(event, data);
     }
 
-    async __subscribe(payload) {
+    async __subscribe(payload, user, callback) {
         if (payload.channel) {
-            await this.getUsers();
-            await this.addUser({ id: this.socket.id, name: payload.name ?? this.socket.id, address: this.socket.handshake.address });
             this.addChannel({ name: payload.channel });
             this.socket.join(payload.channel);
+
+            this.socket.emit('users', this.users);
+            this.socket.emit('user:subscribed', user);
+
+            callback({
+                status: 'success',
+            });
             // axios.post(this.broadcastAuthUrl, {
             //     channel_name: payload.channel,
             //     socket_id: this.socket.id
@@ -80,8 +102,15 @@ class SocketChannel extends Channel {
     }
 
     async __disconnect(socket) {
-        this.removeUser(socket.id);
-        this.getUsers();
+        const matchingSockets = await this.io.in(socket.userID).allSockets();
+        const isDisconnected = matchingSockets.size === 0;
+        if (isDisconnected) {
+            const user: User = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: false })
+            // update the connection status of the session
+            await redisSession.saveSession(socket.sessionID, user)
+            // notify other users
+            this.socket.broadcast.emit('user:disconnected', user.toJSON());
+        }
     }
 
     async __broadcast(event, data) {
@@ -94,13 +123,16 @@ class SocketChannel extends Channel {
         this.socket.broadcast.to(channel).emit(event, data);
     }
 
-    async __error(error) {
+    async __error(error, callback) {
         console.log(error);
+        callback({
+            status: 'error',
+        });
     }
 
     async __broadcastStatus() {
-        this.__emit('users', this.users);
-        this.__emit('channels', this.channels);
+        this.__emit('all:users', this.users);
+        this.__emit('all:channels', this.channels);
     }
 }
 

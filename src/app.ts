@@ -8,6 +8,9 @@ const program = require('commander');
 import express, { Application } from 'express';
 import { createServer, Server } from "http";
 
+import { client } from "./database/redis.db";
+import RedisSessionStore from './store/redis_session_store';
+
 import SocketChannel from "./channels/socket-channel";
 
 const app: Application = express();
@@ -15,9 +18,9 @@ const httpServer: Server = createServer(app);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', function (req, res, next) {
-    res.sendFile(__dirname + '/templates/index.html');
-});
+// app.get('/', function (req, res, next) {
+//     res.sendFile(__dirname + '/templates/index.html');
+// });
 
 let host = '127.0.0.1';
 let port = 3000;
@@ -32,12 +35,13 @@ try {
         .option('-h, --host <n>', 'Host to listen on', 'localhost')
         .option('-a, --auth <n>', 'Broadcast auth url', 'http://localhost:8000/broadcasting/auth')
         .parse(process.argv);
-
     const options = program.opts();
     host = options.host;
     port = options.port;
     authUrl = options.auth;
 } finally {
+    const redisStore = new RedisSessionStore(client);
+    app.set('sessionStore', redisStore);
     new SocketChannel(httpServer, authUrl);
     httpServer.listen(port, host, () => {
         console.log(
