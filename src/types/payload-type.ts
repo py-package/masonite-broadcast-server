@@ -1,7 +1,7 @@
 type Payload = {
-    type: string;
+    event: string;
     channel: string;
-    payload: any;
+    data: any;
 }
 
 export default Payload

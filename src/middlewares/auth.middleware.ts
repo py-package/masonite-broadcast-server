@@ -6,9 +6,8 @@ const sessionStore = new RedisSessionStore(client);
 
 const AuthMiddleware = async (socket, next) => {
     const sessionID = socket.handshake.auth?.sessionID;
-
     if (sessionID) {
-        const session = sessionStore.findSession(sessionID);
+        const session = await sessionStore.findSession(sessionID);
         if (session) {
             socket.sessionID = sessionID;
             socket.userID = session.userID;

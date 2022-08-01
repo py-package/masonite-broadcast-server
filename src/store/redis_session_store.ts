@@ -5,8 +5,8 @@
 }
 
 const SESSION_TTL = 24 * 60 * 60;
-const mapSession = ([userID, address, connected]) =>
-    userID ? { userID, address, connected: connected === "true" } : undefined;
+const mapSession = ([userID, address, sessionID, connected]) =>
+    userID ? { userID, address, sessionID, connected: connected === "true" } : undefined;
 
 class RedisSessionStore extends SessionStore {
     client: any = undefined;
@@ -22,7 +22,7 @@ class RedisSessionStore extends SessionStore {
             .then(mapSession);
     }
 
-    saveSession(id, { userID, address, sessionID, connected }) {
+    async saveSession(id, { userID, address, sessionID, connected }) {
         this.client
             .multi()
             .hset(
@@ -56,13 +56,12 @@ class RedisSessionStore extends SessionStore {
         } while (nextIndex !== 0);
         const commands = [];
         keys.forEach((key) => {
-            commands.push(["hmget", key, "userID", "address", "sessionId", "connected"]);
+            commands.push(["hmget", key, "userID", "address", "sessionID", "connected"]);
         });
         return this.client
             .multi(commands)
             .exec()
             .then((results) => {
-                console.log(results);
                 return results
                     .map(([err, session]) => (err ? undefined : mapSession(session as any)))
                     .filter((v) => !!v);
