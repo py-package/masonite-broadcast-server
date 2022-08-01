@@ -43,7 +43,8 @@ class SocketChannel extends Channel {
 
         const user: User = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true })
         await redisSession.saveSession(socket.sessionID, user)
-        socket.broadcast.emit("user:connected", user.toJSON());
+
+        socket.emit("user:connected", user.toJSON());
         socket.join(socket.userID);
 
         socket.on('disconnect', this.__disconnect.bind(this));
