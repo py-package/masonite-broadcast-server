@@ -5,7 +5,7 @@ import RedisSessionStore from "../store/redis_session_store";
 const sessionStore = new RedisSessionStore(client);
 
 const AuthMiddleware = async (socket, next) => {
-    const sessionID = socket.handshake.query.sessionID;
+    const sessionID = socket.handshake.auth?.sessionID;
 
     if (sessionID) {
         const session = sessionStore.findSession(sessionID);
