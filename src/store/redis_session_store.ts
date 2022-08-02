@@ -5,8 +5,8 @@
 }
 
 const SESSION_TTL = 24 * 60 * 60;
-const mapSession = ([userID, address, sessionID, connected]) =>
-    userID ? { userID, address, sessionID, connected: connected === "true" } : undefined;
+const mapSession = ([userID, address, sessionID, connected, extra]) =>
+    userID ? { userID, address, sessionID, connected: connected === "true", extra } : undefined;
 
 class RedisSessionStore extends SessionStore {
     client: any = undefined;
@@ -18,11 +18,11 @@ class RedisSessionStore extends SessionStore {
 
     findSession(id) {
         return this.client
-            .hmget(`mbroadcast:users:${id}`, "userID", "address", "sessionID", "connected")
+            .hmget(`mbroadcast:users:${id}`, "userID", "address", "sessionID", "connected", "extra")
             .then(mapSession);
     }
 
-    async saveSession(id, { userID, address, sessionID, connected }) {
+    async saveSession(id, { userID, address, sessionID, connected, extra }) {
         this.client
             .multi()
             .hset(
@@ -34,7 +34,9 @@ class RedisSessionStore extends SessionStore {
                 "sessionID",
                 sessionID,
                 "connected",
-                connected
+                connected,
+                "extra",
+                extra
             )
             .expire(`mbroadcast:users:${id}`, SESSION_TTL)
             .exec();
@@ -56,7 +58,7 @@ class RedisSessionStore extends SessionStore {
         } while (nextIndex !== 0);
         const commands = [];
         keys.forEach((key) => {
-            commands.push(["hmget", key, "userID", "address", "sessionID", "connected"]);
+            commands.push(["hmget", key, "userID", "address", "sessionID", "connected", "extra"]);
         });
         return this.client
             .multi(commands)

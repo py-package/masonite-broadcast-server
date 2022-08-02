@@ -12,12 +12,14 @@ const AuthMiddleware = async (socket, next) => {
             socket.sessionID = sessionID;
             socket.userID = session.userID;
             socket.address = session.address;
+            socket.userExtra = session.extra;
             return next();
         }
     }
     socket.sessionID = randomBytes(16).toString("hex");
-    socket.userID = randomBytes(8).toString("hex");
+    socket.userID = socket.handshake.auth?.userID ?? randomBytes(8).toString("hex");
     socket.address = socket.handshake.address;
+    socket.userExtra = undefined;
     next();
 }
 

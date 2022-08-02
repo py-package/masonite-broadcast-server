@@ -43,7 +43,7 @@ class SocketChannel extends Channel {
     async #connection(socket) {
         this.socket = socket;
 
-        const user: User = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true })
+        const user: User = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true, extra: socket.userExtra });
         this.addUser(user);
 
         socket.emit('session', user.toJSON());
@@ -80,6 +80,15 @@ class SocketChannel extends Channel {
                 this.#verifyServerAuthentication()
             }
         });
+
+        /** Set Custom Identifier */
+        socket.on('setExtra', async (arg, callback) => {
+            const user = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true, extra: arg.extra })
+            await this.addUser(user);
+            if (typeof callback === 'function') {
+                return callback(user.toJSON());
+            }
+        })
 
         /** Whisper: send message to other connected users */
         socket.on('whisper', (payload: Payload) => {
