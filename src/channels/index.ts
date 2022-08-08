@@ -24,7 +24,7 @@ class Channel {
     }
 
     async addUser(user: User) {
-        await redisSession.saveSession(user.sessionID, user.toJSON());
+        redisSession.saveSession(user.sessionID, user.toJSON());
         await this.allUsers();
     }
 

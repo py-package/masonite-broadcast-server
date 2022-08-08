@@ -2,7 +2,7 @@
 import { Server } from "socket.io";
 import { Payload, User } from "../types";
 import Channel from ".";
-import { adapter, redisSession } from "../database/redis.db";
+import { adapter } from "../database/redis.db";
 import AuthMiddleware from "../middlewares/auth.middleware";
 
 class SocketChannel extends Channel {
@@ -11,7 +11,7 @@ class SocketChannel extends Channel {
     socket: any;
     broadcastAuthUrl: string;
 
-    constructor(server, broadcastAuthUrl: string = "http://localhost:8000/broadcasting/authorize") {
+    constructor(server, broadcastAuthUrl: string = "http://localhost:8000/pusher/auth") {
         super();
         this.broadcastAuthUrl = broadcastAuthUrl;
 
@@ -43,7 +43,15 @@ class SocketChannel extends Channel {
     async #connection(socket) {
         this.socket = socket;
 
-        const user: User = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true, extra: socket.userExtra });
+        const user: User = User.fromSession({
+            userID: socket.userID,
+            address: socket.address,
+            sessionID: socket.sessionID,
+            socketID: socket.id,
+            connected: true,
+            extra: socket.userExtra,
+        });
+
         this.addUser(user);
 
         socket.emit('session', user.toJSON());
@@ -54,7 +62,13 @@ class SocketChannel extends Channel {
             const matchingSockets = await this.io.in(socket.userID).allSockets();
             const isDisconnected = matchingSockets.size === 0;
             if (isDisconnected) {
-                const user: User = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: false })
+                const user: User = User.fromSession({
+                    userID: socket.userID,
+                    address: socket.address,
+                    sessionID: socket.sessionID,
+                    socketID: socket.id,
+                    connected: false,
+                })
                 // update the connection status of the session
                 this.addUser(user);
                 // notify other users
@@ -77,14 +91,14 @@ class SocketChannel extends Channel {
                 socket.join(payload.channel);
                 socket.emit('users', this.users);
                 socket.emit('user:subscribed', user);
-                this.#verifyServerAuthentication()
+                this.#verifyServerAuthentication(payload.channel, socket)
             }
         });
 
         /** Set Custom Identifier */
         socket.on('setExtra', async (arg, callback) => {
             const user = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true, extra: arg.extra })
-            await this.addUser(user);
+            this.addUser(user);
             if (typeof callback === 'function') {
                 return callback(user.toJSON());
             }
@@ -111,14 +125,17 @@ class SocketChannel extends Channel {
         })
     }
 
-    #verifyServerAuthentication() {
+    #verifyServerAuthentication(channel, socket) {
+        // console.log('authentication...');
         // axios.post(this.broadcastAuthUrl, {
-        //     channel_name: payload.channel,
-        //     socket_id: this.socket.id
+        //     channel_name: channel,
+        //     socket_id: socket.socket_id,
         // }).then((response) => {
-        //     this.addChannel({ name: `private-${payload.channel}` });
-        //     this.socket.join(`private-${payload.channel}`);
+        //     console.log(response);
+        //     // this.addChannel({ name: `private-${channel}` });
+        //     // this.socket.join(`private-${channel}`);
         // }).catch((err) => {
+        //     console.log(err);
         //     console.info("broadcast auth server does not exists...")
         // })
     }

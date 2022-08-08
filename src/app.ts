@@ -24,16 +24,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let host = '127.0.0.1';
 let port = 3000;
-let authUrl = 'http://localhost:8000/broadcasting/auth';
+let authUrl = 'http://localhost:8000/pusher/auth';
 
 try {
     program
         .version('0.0.1')
         // .command('exec start')
         .description("Masonite Broadcast Server!")
-        .option('-p, --port <n>', 'Port to listen on', "3000")
-        .option('-h, --host <n>', 'Host to listen on', 'localhost')
-        .option('-a, --auth <n>', 'Broadcast auth url', 'http://localhost:8000/broadcasting/auth')
+        .option('-p, --port <n>', "Port to listen on", "3000")
+        .option('-h, --host <n>', "Host to listen on", 'localhost')
+        .option('-a, --auth <n>', "Broadcast auth url", 'http://localhost:8000/pusher/auth')
         .parse(process.argv);
     const options = program.opts();
     host = options.host;
