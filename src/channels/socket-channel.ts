@@ -36,8 +36,6 @@ class SocketChannel extends Channel {
                 this.io.on('connection', this.#connection.bind(this));
             }
         });
-
-        // setupWorker(this.io);
     }
 
     async #connection(socket) {
@@ -68,6 +66,7 @@ class SocketChannel extends Channel {
                     sessionID: socket.sessionID,
                     socketID: socket.id,
                     connected: false,
+                    extra: socket.userExtra,
                 })
                 // update the connection status of the session
                 this.addUser(user);
@@ -97,7 +96,14 @@ class SocketChannel extends Channel {
 
         /** Set Custom Identifier */
         socket.on('setExtra', async (arg, callback) => {
-            const user = User.fromSession({ userID: socket.userID, address: socket.address, sessionID: socket.sessionID, connected: true, extra: arg.extra })
+            const user = User.fromSession({
+                userID: socket.userID,
+                address: socket.address,
+                sessionID: socket.sessionID,
+                socketID: socket.id,
+                connected: true,
+                extra: arg.extra
+            });
             this.addUser(user);
             if (typeof callback === 'function') {
                 return callback(user.toJSON());
